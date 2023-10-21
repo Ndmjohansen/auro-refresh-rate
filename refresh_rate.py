@@ -28,10 +28,10 @@ def change_refresh_rate(is_plugged_in: bool):
     #print(refresh_rates)
     devmode = pywintypes.DEVMODEType()
     if is_plugged_in:
-        print('set to 240hz')
+        #print('set to 240hz')
         devmode.DisplayFrequency = (max(refresh_rates))
     elif not is_plugged_in:
-        print('set to 60hz')
+        #print('set to 60hz')
         devmode.DisplayFrequency = (min(refresh_rates))
 
     devmode.Fields = win32con.DM_DISPLAYFREQUENCY
@@ -44,10 +44,10 @@ change_refresh_rate(plugged_in_state)
 while True:
     loop_state = psutil.sensors_battery().power_plugged
     if plugged_in_state == loop_state:
-        print("No state change")
+        #print("No state change")
         time.sleep(5)
     elif plugged_in_state != loop_state:
-        print("State Changed")
+        #print("State Changed")
         plugged_in_state = loop_state
         change_refresh_rate(loop_state)
         time.sleep(5)
