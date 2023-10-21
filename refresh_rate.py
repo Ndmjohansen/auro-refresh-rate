@@ -40,6 +40,7 @@ def change_refresh_rate(is_plugged_in: bool):
 
 
 plugged_in_state = psutil.sensors_battery().power_plugged
+change_refresh_rate(plugged_in_state)
 while True:
     loop_state = psutil.sensors_battery().power_plugged
     if plugged_in_state == loop_state:
