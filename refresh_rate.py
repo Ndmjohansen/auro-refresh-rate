@@ -4,6 +4,7 @@ import win32con
 import psutil
 import time
 
+
 def get_refresh_rates_for_native_resolution():
     device_name = win32api.EnumDisplayDevices(None, 0).DeviceName
     max_resolution = (0, 0)
@@ -23,31 +24,47 @@ def get_refresh_rates_for_native_resolution():
     return resolution_refresh_rates
 
 
-def change_refresh_rate(is_plugged_in: bool):
-    refresh_rates = get_refresh_rates_for_native_resolution()
-    #print(refresh_rates)
-    devmode = pywintypes.DEVMODEType()
-    if is_plugged_in:
-        #print('set to 240hz')
-        devmode.DisplayFrequency = (max(refresh_rates))
-    elif not is_plugged_in:
-        #print('set to 60hz')
-        devmode.DisplayFrequency = (min(refresh_rates))
-
-    devmode.Fields = win32con.DM_DISPLAYFREQUENCY
-
-    win32api.ChangeDisplaySettings(devmode, 0)
+def get_refresh_rate():
+    device = win32api.EnumDisplayDevices()
+    settings = win32api.EnumDisplaySettings(device.DeviceName, -1)
+    return settings.DisplayFrequency
 
 
+def flip_refresh_rate(current_hz, new_hz):
+    while current_hz != new_hz:
+        # print("flip refresh loop")
+        devmode = pywintypes.DEVMODEType()
+        devmode.DisplayFrequency = new_hz
+        devmode.Fields = win32con.DM_DISPLAYFREQUENCY
+        win32api.ChangeDisplaySettings(devmode, 0)
+        # Wait for device to flip refresh rate
+        time.sleep(3)
+        current_hz = get_refresh_rate()
+    # print('Done flipping refresh rate')
+
+
+# Global variables
 plugged_in_state = psutil.sensors_battery().power_plugged
-change_refresh_rate(plugged_in_state)
+refresh_rates = get_refresh_rates_for_native_resolution()
+min_refresh = min(refresh_rates)
+max_refresh = max(refresh_rates)
+# set correct refresh rate on startup
+if plugged_in_state:
+    flip_refresh_rate(get_refresh_rate(), max_refresh)
+elif not plugged_in_state:
+    flip_refresh_rate(get_refresh_rate(), min_refresh)
+
+# Main loop
 while True:
     loop_state = psutil.sensors_battery().power_plugged
     if plugged_in_state == loop_state:
-        #print("No state change")
+        # print("No state change")
         time.sleep(5)
     elif plugged_in_state != loop_state:
-        #print("State Changed")
+        # print("State Changed")
         plugged_in_state = loop_state
-        change_refresh_rate(loop_state)
+        if plugged_in_state:
+            flip_refresh_rate(get_refresh_rate(), max_refresh)
+        elif not plugged_in_state:
+            flip_refresh_rate(get_refresh_rate(), min_refresh)
         time.sleep(5)
